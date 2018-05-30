@@ -184,8 +184,10 @@ class SimpleJSONRPCRequestHandler(
         self.wfile.flush()
         self.connection.shutdown(1)
 
+class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+    pass
 
-class SimpleJSONRPCServer(SocketServer.TCPServer, SimpleJSONRPCDispatcher):
+class SimpleJSONRPCServer(ThreadedTCPServer, SimpleJSONRPCDispatcher):
 
     allow_reuse_address = True
 
@@ -209,9 +211,9 @@ class SimpleJSONRPCServer(SocketServer.TCPServer, SimpleJSONRPCDispatcher):
                     logging.warning("Could not unlink socket %s", addr)
         # if python 2.5 and lower
         if vi[0] < 3 and vi[1] < 6:
-            SocketServer.TCPServer.__init__(self, addr, requestHandler)
+            ThreadedTCPServer.__init__(self, addr, requestHandler)
         else:
-            SocketServer.TCPServer.__init__(
+            ThreadedTCPServer.__init__(
                 self, addr, requestHandler, bind_and_activate)
         if fcntl is not None and hasattr(fcntl, 'FD_CLOEXEC'):
             flags = fcntl.fcntl(self.fileno(), fcntl.F_GETFD)
